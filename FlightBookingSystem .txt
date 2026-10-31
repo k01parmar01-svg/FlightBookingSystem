@@ -1,0 +1,250 @@
+-- ══════════════════════════════════════════════════════════════
+--  FLIGHT BOOKING SYSTEM – MS Access SQL
+--  Foreign Keys using inline REFERENCES (no CONSTRAINT keyword)
+--  Syntax: column_name DATATYPE REFERENCES ParentTable(column)
+--  Run each CREATE TABLE ONE AT A TIME in Access SQL View
+-- ══════════════════════════════════════════════════════════════
+
+
+-- TABLE 1: Airlines  (no FK – root table)
+CREATE TABLE Airlines (
+    airline_id   AUTOINCREMENT PRIMARY KEY,
+    airline_name TEXT(100),
+    airline_code TEXT(10),
+    country      TEXT(50),
+    contact      TEXT(15)
+);
+
+-- TABLE 2: Airports  (no FK – root table)
+CREATE TABLE Airports (
+    airport_id   AUTOINCREMENT PRIMARY KEY,
+    airport_code TEXT(10),
+    airport_name TEXT(100),
+    city         TEXT(50),
+    country      TEXT(50)
+);
+
+-- TABLE 3: Users  (no FK – root table)
+CREATE TABLE Users (
+    user_id   AUTOINCREMENT PRIMARY KEY,
+    full_name TEXT(100),
+    email     TEXT(100),
+    password  TEXT(50),
+    phone     TEXT(15)
+);
+
+-- TABLE 4: Flights
+-- FK → Airlines, Airports (origin), Airports (destination)
+CREATE TABLE Flights (
+    flight_id       AUTOINCREMENT PRIMARY KEY,
+    flight_number   TEXT(20),
+    airline_id      INTEGER REFERENCES Airlines(airline_id),
+    origin_id       INTEGER REFERENCES Airports(airport_id),
+    destination_id  INTEGER REFERENCES Airports(airport_id),
+    departure       TEXT(30),
+    arrival         TEXT(30),
+    total_seats     INTEGER,
+    available_seats INTEGER,
+    fstatus         TEXT(20)
+);
+
+-- TABLE 5: FlightClasses
+-- FK → Flights
+CREATE TABLE FlightClasses (
+    class_id    AUTOINCREMENT PRIMARY KEY,
+    flight_id   INTEGER REFERENCES Flights(flight_id),
+    class_name  TEXT(20),
+    price       CURRENCY,
+    total_seats INTEGER,
+    avail_seats INTEGER
+);
+
+-- TABLE 6: Seats
+-- FK → Flights, FlightClasses
+CREATE TABLE Seats (
+    seat_id     AUTOINCREMENT PRIMARY KEY,
+    flight_id   INTEGER REFERENCES Flights(flight_id),
+    class_id    INTEGER REFERENCES FlightClasses(class_id),
+    seat_number TEXT(10),
+    is_booked   TEXT(5)
+);
+
+-- TABLE 7: Bookings
+-- FK → Users, Flights
+CREATE TABLE Bookings (
+    booking_id   AUTOINCREMENT PRIMARY KEY,
+    user_id      INTEGER REFERENCES Users(user_id),
+    flight_id    INTEGER REFERENCES Flights(flight_id),
+    booking_date TEXT(30),
+    bstatus      TEXT(20),
+    total_amount CURRENCY
+);
+
+-- TABLE 8: Passengers
+-- FK → Bookings, FlightClasses, Seats
+CREATE TABLE Passengers (
+    passenger_id AUTOINCREMENT PRIMARY KEY,
+    booking_id   INTEGER REFERENCES Bookings(booking_id),
+    class_id     INTEGER REFERENCES FlightClasses(class_id),
+    seat_id      INTEGER REFERENCES Seats(seat_id),
+    full_name    TEXT(100),
+    age          INTEGER,
+    gender       TEXT(5)
+);
+
+-- TABLE 9: Payments
+-- FK → Bookings
+CREATE TABLE Payments (
+    payment_id       AUTOINCREMENT PRIMARY KEY,
+    booking_id       INTEGER REFERENCES Bookings(booking_id),
+    amount           CURRENCY,
+    method           TEXT(20),
+    pstatus          TEXT(20),
+    payment_type     TEXT(30),
+    transaction_date TEXT(30)
+);
+
+-- TABLE 10: Cancellations
+-- FK → Bookings
+CREATE TABLE Cancellations (
+    cancellation_id AUTOINCREMENT PRIMARY KEY,
+    booking_id      INTEGER REFERENCES Bookings(booking_id),
+    cancelled_on    TEXT(30),
+    cancelled_by    TEXT(20),
+    reason          TEXT(200),
+    refund_amount   CURRENCY,
+    refund_status   TEXT(20)
+);
+
+-- TABLE 11: PriceHistory
+-- FK → FlightClasses
+CREATE TABLE PriceHistory (
+    history_id AUTOINCREMENT PRIMARY KEY,
+    class_id   INTEGER REFERENCES FlightClasses(class_id),
+    old_price  CURRENCY,
+    new_price  CURRENCY,
+    changed_on TEXT(30),
+    changed_by TEXT(100)
+);
+
+-- TABLE 12: ClassUpgrades
+-- FK → Passengers, FlightClasses (old), FlightClasses (new)
+CREATE TABLE ClassUpgrades (
+    upgrade_id       AUTOINCREMENT PRIMARY KEY,
+    passenger_id     INTEGER REFERENCES Passengers(passenger_id),
+    old_class_id     INTEGER REFERENCES FlightClasses(class_id),
+    new_class_id     INTEGER REFERENCES FlightClasses(class_id),
+    price_difference CURRENCY,
+    upgraded_on      TEXT(30)
+);
+
+-- TABLE 13: FlightScheduleChanges
+-- FK → Flights
+CREATE TABLE FlightScheduleChanges (
+    change_id     AUTOINCREMENT PRIMARY KEY,
+    flight_id     INTEGER REFERENCES Flights(flight_id),
+    old_departure TEXT(30),
+    new_departure TEXT(30),
+    old_arrival   TEXT(30),
+    new_arrival   TEXT(30),
+    change_reason TEXT(200),
+    changed_on    TEXT(30)
+);
+
+-- TABLE 14: Notifications
+-- FK → Users, Flights
+CREATE TABLE Notifications (
+    notification_id AUTOINCREMENT PRIMARY KEY,
+    user_id         INTEGER REFERENCES Users(user_id),
+    flight_id       INTEGER REFERENCES Flights(flight_id),
+    ntype           TEXT(50),
+    message         TEXT(255),
+    is_read         TEXT(5),
+    created_on      TEXT(30)
+);
+
+
+-- ══════════════════════════════════════════════════════════════
+--  SAMPLE DATA – Run each INSERT separately
+-- ══════════════════════════════════════════════════════════════
+
+-- Airlines
+INSERT INTO Airlines (airline_name, airline_code, country, contact) VALUES ('Air India', 'AI', 'India', '1800-180-1407');
+INSERT INTO Airlines (airline_name, airline_code, country, contact) VALUES ('IndiGo',    '6E', 'India', '0124-6173838');
+INSERT INTO Airlines (airline_name, airline_code, country, contact) VALUES ('SpiceJet',  'SG', 'India', '1800-180-3333');
+INSERT INTO Airlines (airline_name, airline_code, country, contact) VALUES ('Vistara',   'UK', 'India', '1860-108-8800');
+INSERT INTO Airlines (airline_name, airline_code, country, contact) VALUES ('Go First',  'G8', 'India', '1800-2100-999');
+
+-- Airports
+INSERT INTO Airports (airport_code, airport_name, city, country) VALUES ('BOM', 'Chhatrapati Shivaji International', 'Mumbai',    'India');
+INSERT INTO Airports (airport_code, airport_name, city, country) VALUES ('DEL', 'Indira Gandhi International',       'Delhi',     'India');
+INSERT INTO Airports (airport_code, airport_name, city, country) VALUES ('BLR', 'Kempegowda International',          'Bangalore', 'India');
+INSERT INTO Airports (airport_code, airport_name, city, country) VALUES ('MAA', 'Chennai International',             'Chennai',   'India');
+INSERT INTO Airports (airport_code, airport_name, city, country) VALUES ('CCU', 'Netaji Subhas Chandra Bose Intl',   'Kolkata',   'India');
+INSERT INTO Airports (airport_code, airport_name, city, country) VALUES ('HYD', 'Rajiv Gandhi International',        'Hyderabad', 'India');
+INSERT INTO Airports (airport_code, airport_name, city, country) VALUES ('GOI', 'Goa International',                 'Goa',       'India');
+INSERT INTO Airports (airport_code, airport_name, city, country) VALUES ('JAI', 'Jaipur International',              'Jaipur',    'India');
+
+-- Flights
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('AI-101', 1, 1, 2, '2025-06-01 06:00', '2025-06-01 08:00', 150, 150, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('6E-202', 2, 2, 3, '2025-06-01 10:00', '2025-06-01 12:30', 180, 180, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('SG-303', 3, 1, 4, '2025-06-01 14:00', '2025-06-01 16:00', 120, 120, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('UK-404', 4, 5, 1, '2025-06-02 08:00', '2025-06-02 10:30', 100, 100, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('AI-105', 1, 2, 1, '2025-06-02 07:00', '2025-06-02 09:00', 150, 150, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('6E-310', 2, 3, 6, '2025-06-02 11:00', '2025-06-02 12:15', 180, 180, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('SG-415', 3, 4, 5, '2025-06-02 13:00', '2025-06-02 15:30', 120, 120, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('UK-520', 4, 1, 7, '2025-06-03 08:30', '2025-06-03 09:45', 100, 100, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('AI-215', 1, 6, 2, '2025-06-03 10:00', '2025-06-03 12:30', 150, 150, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('6E-422', 2, 1, 5, '2025-06-03 14:00', '2025-06-03 16:30', 180, 180, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('SG-530', 3, 2, 7, '2025-06-03 16:00', '2025-06-03 18:15', 120, 120, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('UK-635', 4, 3, 1, '2025-06-04 09:00', '2025-06-04 11:00', 100, 100, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('AI-320', 1, 5, 4, '2025-06-04 12:00', '2025-06-04 14:30', 150, 150, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('6E-540', 2, 7, 2, '2025-06-04 15:00', '2025-06-04 17:30', 180, 180, 'Scheduled');
+INSERT INTO Flights (flight_number, airline_id, origin_id, destination_id, departure, arrival, total_seats, available_seats, fstatus) VALUES ('SG-645', 3, 6, 3, '2025-06-05 07:30', '2025-06-05 08:45', 120, 120, 'Scheduled');
+
+-- FlightClasses (Economy / Business / First for all 15 flights)
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (1,  'Economy',  4500,  100, 100);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (1,  'Business', 9000,   40,  40);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (1,  'First',   15000,   10,  10);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (2,  'Economy',  3800,  130, 130);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (2,  'Business', 7600,   40,  40);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (2,  'First',   13000,   10,  10);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (3,  'Economy',  3200,   85,  85);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (3,  'Business', 6400,   30,  30);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (3,  'First',   11000,    5,   5);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (4,  'Economy',  5500,   65,  65);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (4,  'Business',11000,   30,  30);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (4,  'First',   18000,    5,   5);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (5,  'Economy',  4200,  100, 100);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (5,  'Business', 8400,   40,  40);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (5,  'First',   14000,   10,  10);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (6,  'Economy',  2500,  130, 130);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (6,  'Business', 5000,   40,  40);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (6,  'First',    9000,   10,  10);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (7,  'Economy',  3600,   85,  85);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (7,  'Business', 7200,   30,  30);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (7,  'First',   12000,    5,   5);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (8,  'Economy',  2800,   65,  65);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (8,  'Business', 5600,   30,  30);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (8,  'First',   10000,    5,   5);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (9,  'Economy',  4800,  100, 100);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (9,  'Business', 9600,   40,  40);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (9,  'First',   16000,   10,  10);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (10, 'Economy',  4100,  130, 130);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (10, 'Business', 8200,   40,  40);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (10, 'First',   14000,   10,  10);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (11, 'Economy',  3900,   85,  85);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (11, 'Business', 7800,   30,  30);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (11, 'First',   13000,    5,   5);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (12, 'Economy',  3500,   65,  65);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (12, 'Business', 7000,   30,  30);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (12, 'First',   12000,    5,   5);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (13, 'Economy',  4300,  100, 100);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (13, 'Business', 8600,   40,  40);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (13, 'First',   15000,   10,  10);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (14, 'Economy',  4600,  130, 130);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (14, 'Business', 9200,   40,  40);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (14, 'First',   16000,   10,  10);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (15, 'Economy',  2200,   85,  85);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (15, 'Business', 4400,   30,  30);
+INSERT INTO FlightClasses (flight_id, class_name, price, total_seats, avail_seats) VALUES (15, 'First',    8000,    5,   5);
